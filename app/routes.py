@@ -36,19 +36,77 @@
 # - Creation of endpoints for Create and List All operations for each model in the blog system, following the principles of RESTful API design and adhering to REST Resource Naming Conventions.
 
 
+# Lesson 3: Assignment | API Security
+
+# Task 1: Implement JWT Token Generation
+
+# - Add the pyjwt library to the requirements.txt file to enable JWT token generation and validation.
+# - Create a utils folder and generate the util.py file to create tokens and validate tokens as required.
+# - Define a secret key to be used for signing the JWT tokens.
+# - Implement a function named encode_token(user_id) in util.py to generate JWT tokens with an expiration time and user ID as the payload.
+# - Ensure that the secret key is kept secure and not exposed publicly.
+# - Test the token generation function to ensure that tokens are generated correctly.
+
+# Task 2: Authentication Logic
+
+# - Create a login function to authenticate users using the User model.
+# - Utilize the encode_token function from the util.py module to generate the JWT token with the user ID as the payload.
+# - Return the JWT token along with a success message upon successful authentication.
+# - Create the controller to handle the JWT token returned from the authentication service.
+
+# Task 3: Update Endpoints
+
+# - Update the endpoint to create a post so that it requires a token
+# - Utilize the token_auth.login_required function from the auth.py module to verify the token.
+# - If the request does not have a token, send a 401 response.
+
+# Expected Outcomes:
+
+# - Implementation of JWT token-based authentication and authorization to enhance the security of the blog.
+# - Successful generation of JWT tokens with expiration time and user ID as the payload.
+# - Integration of JWT token generation and validation into the authentication logic to provide secure access to endpoints.
+# - A more secure blog with JWT token-based authentication, ensuring the protection of sensitive data and resources.
+
+
+
 from app import app # from the app folder, import the app variable (Flask instance)
 from flask import request
-from app.schemas.userSchema import user_input_schema, user_output_schema, users_schema
+from app.schemas.userSchema import user_input_schema, user_output_schema, users_schema, user_login_schema
 from app.schemas.postSchema import post_schema, posts_schema
 from marshmallow import ValidationError
 from app.database import db
 from app.models import User, Post
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
+from app.utils.util import encode_token
+from app.auth import token_auth
 
 
 @app.route('/')
 def index():
     return 'Welcome to the blog!'
+
+# ==== Token Endpoints ====
+
+@app.route('/token', methods=["POST"])
+def get_token():
+    if not request.is_json:
+        return {"error": "Request body must be application/json"}, 400 # Bad Request by Client
+    try:
+        data = request.json
+        credentials = user_login_schema.load(data)
+        # Query the user table for a user with that username
+        query = db.select(User).where(User.username == credentials['username'])
+        user = db.session.scalars(query).first()
+        # If is is a user and the user's password matches the credentials
+        if user is not None and check_password_hash(user.password, credentials['password']):
+            # Generate a token with the user's id
+            auth_token = encode_token(user.user_id)
+            return {'token': auth_token}, 200
+        # If either the user with that username does not exist or the password is wrong
+        else:
+            return {"error": "Username and/or password is incorrect"}, 401 # Unauthorized
+    except ValidationError as err:
+        return err.messages, 400
 
 # ==== Users Endpoints ====
 
@@ -126,6 +184,7 @@ def get_single_post(post_id):
 
 # Create a new post
 @app.route('/posts', methods=["POST"])
+@token_auth.login_required
 def create_post():
     # Check if the request has a JSON body
     if not request.is_json:
@@ -136,11 +195,16 @@ def create_post():
         # Check if the body has all of the required fields
         post_data = post_schema.load(data)
 
+        # Get the current user from the token
+        current_user = token_auth.current_user()
+
         # Create a new instance of Post 
         new_post = Post(
             title=post_data['title'],
             body=post_data['body'],
-            user_id=post_data['user_id']
+            # user_id=post_data['user_id']
+            # Use the user_id from the authenticated token instead of the request body:
+            user_id=current_user.user_id  # Use the user_id from the authenticated user
         )
         # and add to the database
         db.session.add(new_post)
