@@ -8,6 +8,6 @@ swaggerui_blueprint = get_swaggerui_blueprint(
     SWAGGER_URL,
     API_URL,
     config = {
-        'app_name': "Blog API"
+        'app_name': "Victor Bondaruk's Blog API"
     }
 )

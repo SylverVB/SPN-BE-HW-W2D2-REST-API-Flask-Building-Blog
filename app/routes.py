@@ -43,7 +43,7 @@ def get_token():
 
 # ==== Users Endpoints ====
 
-# Get all users
+# Get all users (Admin Only)
 @app.route('/users', methods=['GET'])
 @token_auth.login_required(role='admin')
 @limiter.limit("100 per day")
@@ -61,7 +61,7 @@ def get_all_users():
     # sys.stdout.flush()
     return users_schema.jsonify(users)
 
-# Get a single user by ID
+# Get a single user by ID (Admin Only)
 @app.route('/users/<int:user_id>', methods=["GET"])
 @token_auth.login_required(role='admin')
 @limiter.limit("100 per day")
@@ -110,14 +110,13 @@ def create_user():
     except ValueError as err:
         return {"error": str(err)}, 400
 
-# ==== Admin-only Endpoints ====
-    
+# Admin-only Endpoint
 @app.route('/admin')
 @token_auth.login_required(role='admin')
 def admins_only():
     return "Hello {} {} (username: {}), you are an admin!".format(token_auth.current_user().first_name, token_auth.current_user().last_name, token_auth.current_user().username)
 
-# Update a user by ID:
+# Update a user by ID (Admin Only)
 @app.route('/users/<int:user_id>', methods=["PUT"])
 @token_auth.login_required(role='admin')
 @limiter.limit("100 per day")
@@ -157,7 +156,6 @@ def update_user(user_id):
         return err.messages, 400
     except ValueError as err:
         return {"error": str(err)}, 400
-
 
 # Delete a user by ID (Admin Only):
 @app.route('/users/<int:user_id>', methods=["DELETE"])

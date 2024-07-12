@@ -362,6 +362,35 @@ class TestCommentEndpoints(unittest.TestCase):
 
     @patch('app.auth.token_auth.verify_token')
     @patch('app.auth.token_auth.current_user')
+    @patch('app.routes.db.session.execute')
+    def test_list_comments(self, mock_execute, mock_current_user, mock_verify_token):
+        mock_user = MagicMock()
+        mock_user.user_id = 1
+        mock_current_user.return_value = mock_user
+        mock_verify_token.return_value = mock_user
+
+        mock_comment = MagicMock()
+        mock_comment.comment_id = 1
+        mock_comment.post_id = 1
+        mock_comment.content = fake.sentence()
+        mock_comment.user_id = mock_user.user_id
+
+        mock_query = MagicMock()
+        mock_query.scalars().all.return_value = [mock_comment]
+        mock_execute.return_value = mock_query
+
+        token = encode_token(mock_user.user_id)
+        response = self.client.get('/comments', headers={'Authorization': f'Bearer {token}'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIsInstance(response.json, list)
+        self.assertGreater(len(response.json), 0)
+        self.assertIn('comment_id', response.json[0])
+        self.assertIn('content', response.json[0])
+        self.assertIn('user_id', response.json[0])
+        self.assertIn('post_id', response.json[0])
+
+    @patch('app.auth.token_auth.verify_token')
+    @patch('app.auth.token_auth.current_user')
     @patch('app.routes.db.session.get')
     @patch('app.routes.db.session.commit')
     def test_update_comment(self, mock_commit, mock_get, mock_current_user, mock_verify_token):

@@ -87,7 +87,7 @@ Replace `your_database_url` with the URL of your database and `your_secret_key` 
 2. **Run the Flask application:**
 
    ```bash
-   flask run
+   flask --debug run
    ```
 
 The application will be available at `http://127.0.0.1:5000`.
@@ -130,7 +130,6 @@ The API documentation is available via Swagger. After starting the application, 
 
 - **Get all posts**: `GET /posts`
 - **Get a single post by ID**: `GET /posts/{post_id}`
-- **Get comments for a post**: `GET /posts/{post_id}/comments`
 - **Create a new post**: `POST /posts`
 - **Update a post by ID**: `PUT /posts/{post_id}`
 - **Delete a post by ID**: `DELETE /posts/{post_id}`
@@ -142,6 +141,7 @@ The API documentation is available via Swagger. After starting the application, 
 - **Create a new comment**: `POST /comments`
 - **Update a comment by ID**: `PUT /comments/{comment_id}`
 - **Delete a comment by ID**: `DELETE /comments/{comment_id}`
+- **List comments for a specific post**: `GET /posts/{post_id}/comments`
 
 ## Project Structure
 

@@ -67,6 +67,7 @@ components:
         user_id:
           type: integer
           description: ID of the user
+          example: 1
         first_name:
           type: string
         last_name:
@@ -83,6 +84,7 @@ components:
         post_id:
           type: integer
           description: ID of the post
+          example: 1
         title:
           type: string
         body:
@@ -90,20 +92,24 @@ components:
         user_id:
           type: integer
           description: ID of the user who created the post
+          example: 1
     Comment:
       type: object
       properties:
         comment_id:
           type: integer
           description: ID of the comment
+          example: 1
         content:
           type: string
         user_id:
           type: integer
           description: ID of the user who created the comment
+          example: 1
         post_id:
           type: integer
           description: ID of the post to which the comment belongs
+          example: 1
 security:
   - BearerAuth: []
 paths:
@@ -140,7 +146,7 @@ paths:
                     error: 'Username and/or password is incorrect'
   /users:
     get:
-      summary: Get all users
+      summary: Get all users (Admin Only)
       security:
         - BearerAuth: []
       responses:
@@ -169,13 +175,14 @@ paths:
                 $ref: '#/components/schemas/UserOutput'
   /users/{user_id}:
     get:
-      summary: Get a single user by ID
+      summary: Get a single user by ID (Admin Only)
       parameters:
         - name: user_id
           in: path
           required: true
           schema:
             type: integer
+            example: 1
       security:
         - BearerAuth: []
       responses:
@@ -188,13 +195,14 @@ paths:
         '404':
           description: User not found
     put:
-      summary: Update a user by ID
+      summary: Update a user by ID (Admin Only)
       parameters:
         - name: user_id
           in: path
           required: true
           schema:
             type: integer
+            example: 1
       requestBody:
         required: true
         content:
@@ -213,13 +221,14 @@ paths:
         '404':
           description: User not found
     delete:
-      summary: Delete a user by ID
+      summary: Delete a user by ID (Admin Only)
       parameters:
         - name: user_id
           in: path
           required: true
           schema:
             type: integer
+            example: 1
       security:
         - BearerAuth: []
       responses:
@@ -272,6 +281,7 @@ paths:
           required: true
           schema:
             type: integer
+            example: 1
       security:
         - BearerAuth: []
       responses:
@@ -291,6 +301,7 @@ paths:
           required: true
           schema:
             type: integer
+            example: 1
       requestBody:
         required: true
         content:
@@ -321,11 +332,38 @@ paths:
           required: true
           schema:
             type: integer
+            example: 1
       security:
         - BearerAuth: []
       responses:
         '200':
           description: Post deleted
+        '404':
+          description: Post not found
+  /posts/{post_id}/comments:
+    get:
+      summary: List all comments for a specific post
+      parameters:
+        - name: post_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            description: ID of the post to which comments belong
+            example: 1
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+        '401':
+          description: Unauthorized
         '404':
           description: Post not found
   /comments:
@@ -355,6 +393,7 @@ paths:
                   type: string
                 post_id:
                   type: integer
+                  example: 1
       security:
         - BearerAuth: []
       responses:
@@ -373,6 +412,7 @@ paths:
           required: true
           schema:
             type: integer
+            example: 1
       security:
         - BearerAuth: []
       responses:
@@ -392,6 +432,7 @@ paths:
           required: true
           schema:
             type: integer
+            example: 1
       requestBody:
         required: true
         content:
@@ -403,6 +444,7 @@ paths:
                   type: string
                 post_id:
                   type: integer
+                  example: 1
       security:
         - BearerAuth: []
       responses:
@@ -415,13 +457,14 @@ paths:
         '404':
           description: Comment not found
     delete:
-      summary: Delete a comment by ID
+      summary: Delete a comment by ID (Admin Only)
       parameters:
         - name: comment_id
           in: path
           required: true
           schema:
             type: integer
+            example: 1
       security:
         - BearerAuth: []
       responses:
