@@ -1,5 +1,6 @@
 from app.schemas import ma
-from marshmallow import fields
+from marshmallow import fields, post_load
+from app.models import Role
 
 
 # Define the Customer Schema
@@ -10,7 +11,13 @@ class UserSchema(ma.Schema):
     username = fields.String(required=True)
     email = fields.String(required=True)
     password = fields.String(required=True)
+    role = fields.String(required=False)
 
+    @post_load
+    def make_user(self, data, **kwargs):
+        if 'role' in data and isinstance(data['role'], str):
+            data['role'] = Role(role_name=data['role'])
+        return data
 
 # Create instances of the schema
 user_input_schema = UserSchema()

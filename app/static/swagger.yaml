@@ -1,0 +1,431 @@
+openapi: 3.0.0
+info:
+  title: "Victor Bondaruk's Blog API"
+  version: 1.0.0
+servers:
+  - url: 'http://localhost:5000'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    TokenCredentials:
+      type: object
+      properties:
+        username:
+          type: string
+          description: The username of the customer
+        password:
+          type: string
+          description: The password associated with the customer
+          format: password
+      required:
+        - username
+        - password
+    TokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Authenticated token
+        error:
+          type: string
+          description: The error that caused unsuccessful login
+    UserInput:
+      type: object
+      properties:
+        first_name:
+          type: string
+          description: First name of the user
+        last_name:
+          type: string
+          description: Last name of the user
+        username:
+          type: string
+          description: Username of the user
+        email:
+          type: string
+          description: Email of the user
+        password:
+          type: string
+          description: Password of the user
+          format: password
+        role:
+          type: string
+          description: Role of the user
+      required:
+        - first_name
+        - last_name
+        - username
+        - email
+        - password
+    UserOutput:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          description: ID of the user
+        first_name:
+          type: string
+        last_name:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+    Post:
+      type: object
+      properties:
+        post_id:
+          type: integer
+          description: ID of the post
+        title:
+          type: string
+        body:
+          type: string
+        user_id:
+          type: integer
+          description: ID of the user who created the post
+    Comment:
+      type: object
+      properties:
+        comment_id:
+          type: integer
+          description: ID of the comment
+        content:
+          type: string
+        user_id:
+          type: integer
+          description: ID of the user who created the comment
+        post_id:
+          type: integer
+          description: ID of the post to which the comment belongs
+security:
+  - BearerAuth: []
+paths:
+  /token:
+    post:
+      summary: Token Endpoint
+      description: Endpoint for authenticating customers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenCredentials'
+      responses:
+        '200':
+          description: Login Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+              examples:
+                application/json:
+                  value:
+                    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MjAyMDI4OTIsImlhdCI6MTYyMDE5OTI5MiwidXNlcl9pZCI6MX0.VF4LERNh3tymGZkgJmXVIrrRbbKJzmb96ax03Z2Mhq'
+        '401':
+          description: Unsuccessful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+              examples:
+                application/json:
+                  value:
+                    error: 'Username and/or password is incorrect'
+  /users:
+    get:
+      summary: Get all users
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of all users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserOutput'
+    post:
+      summary: Create a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInput'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOutput'
+  /users/{user_id}:
+    get:
+      summary: Get a single user by ID
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOutput'
+        '404':
+          description: User not found
+    put:
+      summary: Update a user by ID
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInput'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOutput'
+        '404':
+          description: User not found
+    delete:
+      summary: Delete a user by ID
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User deleted
+        '404':
+          description: User not found
+  /posts:
+    get:
+      summary: Get all posts
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of all posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Post'
+    post:
+      summary: Create a new post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                body:
+                  type: string
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: Post created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+  /posts/{post_id}:
+    get:
+      summary: Get a single post by ID
+      parameters:
+        - name: post_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Post details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '404':
+          description: Post not found
+    put:
+      summary: Update a post by ID
+      parameters:
+        - name: post_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                body:
+                  type: string
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Post updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '404':
+          description: Post not found
+    delete:
+      summary: Delete a post by ID
+      parameters:
+        - name: post_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Post deleted
+        '404':
+          description: Post not found
+  /comments:
+    get:
+      summary: Get all comments
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of all comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+    post:
+      summary: Create a new comment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                post_id:
+                  type: integer
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+  /comments/{comment_id}:
+    get:
+      summary: Get a single comment by ID
+      parameters:
+        - name: comment_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Comment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '404':
+          description: Comment not found
+    put:
+      summary: Update a comment by ID
+      parameters:
+        - name: comment_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                post_id:
+                  type: integer
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Comment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '404':
+          description: Comment not found
+    delete:
+      summary: Delete a comment by ID
+      parameters:
+        - name: comment_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Comment deleted
+        '404':
+          description: Comment not found

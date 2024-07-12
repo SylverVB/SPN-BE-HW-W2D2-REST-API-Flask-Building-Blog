@@ -1,93 +1,26 @@
-# Lesson 1: Assignment | REST API Design Patterns
-
-# Building a Blog with Flask
-
-# Objective: The aim of this assignment is to develop a blog using Flask, incorporating Flask-SQLAlchemy and Flask-Migrate.
-
-# Problem Statement: You are tasked with building a blog API that can handle various aspects of blog operations, including creating, retrieving, and updating users and posts. You can use the following for your models (feel free to modify how you see fit):
-
-# class User(db.Model):
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     name: Mapped[str] = mapped_column(db.String(255), nullable=False)
-#     username: Mapped[str] = mapped_column(db.String(255), nullable=False, unique=True)
-#     email: Mapped[str] = mapped_column(db.String(255), nullable=False, unique=True)
-#     password: Mapped[str] = mapped_column(db.String(255), nullable=False)
-
-# class Post(db.Model):
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     title: Mapped[str] = mapped_column(db.String(255), nullable=False)
-#     body: Mapped[str] = mapped_column(db.String)
-#     user_id: Mapped[str] = mapped_column(db.Integer, nullable=False)
-
-# Task 1: Implement Flask Application
-
-# - Configure the Flask application using the app package to enable easy configuration and instantiation of the application.
-# - Organize the application structure into modules for better code organization and maintainability.
-
-# Task 2: Create Endpoints for CR(UD) Operations
-
-# - For each model (User, Post), create endpoints for performing Create and Fetching All operations.
-# - Use the REST Resource Naming Conventions to design the endpoint URLs and methods.
-# - Ensure that the endpoints adhere to the principles of RESTful API design, including the use of nouns for resource names, plural nouns for collection names, hyphens to separate words, and lowercase letters.
-
-# Expected Outcomes:
-
-# - Successful implementation of the Flask application allowing for users of the API to "sign up" and create a new User in the database, create new blog posts, and retrieve that data
-# - Creation of endpoints for Create and List All operations for each model in the blog system, following the principles of RESTful API design and adhering to REST Resource Naming Conventions.
-
-
-# Lesson 3: Assignment | API Security
-
-# Task 1: Implement JWT Token Generation
-
-# - Add the pyjwt library to the requirements.txt file to enable JWT token generation and validation.
-# - Create a utils folder and generate the util.py file to create tokens and validate tokens as required.
-# - Define a secret key to be used for signing the JWT tokens.
-# - Implement a function named encode_token(user_id) in util.py to generate JWT tokens with an expiration time and user ID as the payload.
-# - Ensure that the secret key is kept secure and not exposed publicly.
-# - Test the token generation function to ensure that tokens are generated correctly.
-
-# Task 2: Authentication Logic
-
-# - Create a login function to authenticate users using the User model.
-# - Utilize the encode_token function from the util.py module to generate the JWT token with the user ID as the payload.
-# - Return the JWT token along with a success message upon successful authentication.
-# - Create the controller to handle the JWT token returned from the authentication service.
-
-# Task 3: Update Endpoints
-
-# - Update the endpoint to create a post so that it requires a token
-# - Utilize the token_auth.login_required function from the auth.py module to verify the token.
-# - If the request does not have a token, send a 401 response.
-
-# Expected Outcomes:
-
-# - Implementation of JWT token-based authentication and authorization to enhance the security of the blog.
-# - Successful generation of JWT tokens with expiration time and user ID as the payload.
-# - Integration of JWT token generation and validation into the authentication logic to provide secure access to endpoints.
-# - A more secure blog with JWT token-based authentication, ensuring the protection of sensitive data and resources.
-
-
-
-from app import app # from the app folder, import the app variable (Flask instance)
-from flask import request
+from app import app, db, limiter, cache # from the app folder, import the app variable (Flask instance)
+from flask import request, jsonify, redirect, url_for
 from app.schemas.userSchema import user_input_schema, user_output_schema, users_schema, user_login_schema
 from app.schemas.postSchema import post_schema, posts_schema
+from app.schemas.commentSchema import comment_schema, comments_schema
 from marshmallow import ValidationError
-from app.database import db
-from app.models import User, Post
+# from app.database import db
+from app.models import User, Post, Comment, Role
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.utils.util import encode_token
-from app.auth import token_auth
-
+from app.auth import token_auth, get_roles
+# import sys
 
 @app.route('/')
+@limiter.limit("100 per day")
 def index():
-    return 'Welcome to the blog!'
+    # return 'Welcome to the blog!'
+    return redirect(url_for('swagger_ui.show'))
 
 # ==== Token Endpoints ====
 
 @app.route('/token', methods=["POST"])
+@limiter.limit("100 per day")
 def get_token():
     if not request.is_json:
         return {"error": "Request body must be application/json"}, 400 # Bad Request by Client
@@ -112,13 +45,27 @@ def get_token():
 
 # Get all users
 @app.route('/users', methods=['GET'])
+@token_auth.login_required(role='admin')
+@limiter.limit("100 per day")
+@cache.cached(timeout=60)
 def get_all_users():
-    query = db.select(User) # select the User model
+    # app.logger.info("Entering get_all_users")
+    # sys.stdout.flush()
+    # Get any request query params aka request.args
+    args = request.args
+    page = args.get('page', 1, type=int)
+    per_page = args.get('per_page', 10, type=int)
+    query = db.select(User).limit(per_page).offset((page-1)*per_page) # select the User model, limit per page and offset
     users = db.session.execute(query).scalars().all()
+    # app.logger.info(f"Fetched comments: {users}")
+    # sys.stdout.flush()
     return users_schema.jsonify(users)
 
 # Get a single user by ID
 @app.route('/users/<int:user_id>', methods=["GET"])
+@token_auth.login_required(role='admin')
+@limiter.limit("100 per day")
+@cache.cached(timeout=60)
 def get_single_user(user_id):
     user = db.session.get(User, user_id)
     # Check if we get a user back or None
@@ -128,6 +75,7 @@ def get_single_user(user_id):
 
 # Create a new user
 @app.route('/users', methods=["POST"])
+@limiter.limit("100 per day")
 def create_user():
     # Check if the request has a JSON body
     if not request.is_json:
@@ -162,18 +110,97 @@ def create_user():
     except ValueError as err:
         return {"error": str(err)}, 400
 
+# ==== Admin-only Endpoints ====
+    
+@app.route('/admin')
+@token_auth.login_required(role='admin')
+def admins_only():
+    return "Hello {} {} (username: {}), you are an admin!".format(token_auth.current_user().first_name, token_auth.current_user().last_name, token_auth.current_user().username)
+
+# Update a user by ID:
+@app.route('/users/<int:user_id>', methods=["PUT"])
+@token_auth.login_required(role='admin')
+@limiter.limit("100 per day")
+def update_user(user_id):
+    # Check if the request has a JSON body
+    if not request.is_json:
+        return {"error": "Request body must be application/json"}, 400
+    try:
+        # Get the request JSON body
+        data = request.json
+        # Load the data into the schema, ignoring missing fields for partial updates
+        user_data = user_input_schema.load(data, partial=True)
+        
+        # Fetch the user from the database
+        user = db.session.get(User, user_id)
+        if user is None:
+            return {"error": f"User with ID {user_id} does not exist"}, 404
+        
+        # Update the user fields
+        for key, value in user_data.items():
+            if key == 'password':
+                value = generate_password_hash(value)
+            if key == 'role' and isinstance(value, Role):
+                # Fetch the actual Role object from the database
+                role = db.session.execute(db.select(Role).where(Role.role_name == value.role_name)).scalar()
+                if not role:
+                    return jsonify({"error": "Role not found"}), 400
+                user.role = role
+            else:
+                setattr(user, key, value)
+        
+        # Commit the changes
+        db.session.commit()
+        
+        return user_output_schema.jsonify(user)
+    except ValidationError as err:
+        return err.messages, 400
+    except ValueError as err:
+        return {"error": str(err)}, 400
+
+
+# Delete a user by ID (Admin Only):
+@app.route('/users/<int:user_id>', methods=["DELETE"])
+@token_auth.login_required(role='admin')
+@limiter.limit("100 per day")
+def delete_user(user_id):
+    # Fetch the user from the database
+    user = db.session.get(User, user_id)
+    if user is None:
+        return {"error": f"User with ID {user_id} does not exist"}, 404
+    
+    # Delete the user
+    db.session.delete(user)
+    db.session.commit()
+    
+    return {"message": f"User with ID {user_id} has been deleted"}, 200
 
 # ==== Posts Endpoints ====
 
 # Get all posts
 @app.route('/posts', methods=["GET"])
+@token_auth.login_required
+@limiter.limit("100 per day")
+@cache.cached(timeout=60)
 def get_all_posts():
-    query = db.select(Post)
+    # app.logger.info("Entering get_all_posts")
+    # sys.stdout.flush()
+    args = request.args
+    page = args.get('page', 1, type=int)
+    per_page = args.get('per_page', 10, type=int)
+    search = args.get('search', '')
+    # query = db.select(Post)
+    query = db.select(Post).where(Post.title.like(f'%{search}%')).limit(per_page).offset((page-1)*per_page)
     posts = db.session.scalars(query).all()
+    # app.logger.info(f"Fetched posts: {posts}")
+    # sys.stdout.flush()
     return posts_schema.jsonify(posts)   
 
 # Get a single post by ID
 @app.route('/posts/<int:post_id>', methods=["GET"])
+@token_auth.login_required
+@limiter.limit("100 per day")
+@cache.cached(timeout=60)
 def get_single_post(post_id):
     # Search the database for a product with that ID
     post = db.session.get(Post, post_id)
@@ -185,6 +212,7 @@ def get_single_post(post_id):
 # Create a new post
 @app.route('/posts', methods=["POST"])
 @token_auth.login_required
+@limiter.limit("100 per day")
 def create_post():
     # Check if the request has a JSON body
     if not request.is_json:
@@ -216,3 +244,178 @@ def create_post():
         return err.messages, 400
     except ValueError as err:
         return {"error": str(err)}, 400
+    
+# Update a post by ID
+@app.route('/posts/<int:post_id>', methods=["PUT"])
+@token_auth.login_required
+@limiter.limit("100 per day")
+def update_post(post_id):
+    # Check if the request has a JSON body
+    if not request.is_json:
+        return {"error": "Request body must be application/json"}, 400
+    try:
+        # Get the request JSON body
+        data = request.json
+        # Load the data into the schema, ignoring missing fields for partial updates
+        post_data = post_schema.load(data, partial=True)
+        
+        # Fetch the post from the database
+        post = db.session.get(Post, post_id)
+        if post is None:
+            return {"error": f"Post with ID {post_id} does not exist"}, 404
+
+        # Ensure the user updating the post is the author
+        current_user = token_auth.current_user()
+        if post.user_id != current_user.user_id:
+            return {"error": "You do not have permission to update this post"}, 403
+        
+        # Update the post fields
+        for key, value in post_data.items():
+            setattr(post, key, value)
+        
+        # Commit the changes
+        db.session.commit()
+        
+        return post_schema.jsonify(post)
+    except ValidationError as err:
+        return err.messages, 400
+    except ValueError as err:
+        return {"error": str(err)}, 400
+
+# Delete a post by ID
+@app.route('/posts/<int:post_id>', methods=["DELETE"])
+@token_auth.login_required
+@limiter.limit("100 per day")
+def delete_post(post_id):
+    # Fetch the post from the database
+    post = db.session.get(Post, post_id)
+    if post is None:
+        return {"error": f"Post with ID {post_id} does not exist"}, 404
+    
+    # Ensure the user deleting the post is the author
+    current_user = token_auth.current_user()
+    if post.user_id != current_user.user_id:
+        return {"error": "You do not have permission to delete this post"}, 403
+    
+    # Delete the post
+    db.session.delete(post)
+    db.session.commit()
+    
+    return {"message": f"Post with ID {post_id} has been deleted"}, 200
+
+# ==== Comments Endpoints ====
+
+# Get all comments
+@app.route('/comments', methods=['GET'])
+@token_auth.login_required
+@limiter.limit("100 per day")
+@cache.cached(timeout=60)
+def get_all_comments():
+    # app.logger.info("Entering get_all_comments")
+    # sys.stdout.flush()
+    args = request.args
+    page = args.get('page', 1, type=int)
+    per_page = args.get('per_page', 10, type=int)
+    # query = db.select(Post)
+    query = db.select(Comment).limit(per_page).offset((page-1)*per_page)
+    # query = db.select(Comment) # select the Comment model
+    comments = db.session.execute(query).scalars().all()
+    # app.logger.info(f"Fetched comments: {comments}")
+    # sys.stdout.flush()
+    return comments_schema.jsonify(comments)
+
+# Get a single comment by ID
+@app.route('/comments/<int:comment_id>', methods=["GET"])
+@token_auth.login_required
+@limiter.limit("100 per day")
+@cache.cached(timeout=60)
+def get_single_comment(comment_id):
+    comment = db.session.get(Comment, comment_id)
+    if comment is not None:
+        return comment_schema.jsonify(comment)
+    return {"error": f"Comment with ID {comment_id} does not exist"}, 404
+
+# Create a new comment
+@app.route('/comments', methods=["POST"])
+@token_auth.login_required
+@limiter.limit("100 per day")
+def create_comment():
+    if not request.is_json:
+        return {"error": "Request body must be application/json"}, 400
+    try:
+        data = request.json
+        comment_data = comment_schema.load(data)
+
+        current_user = token_auth.current_user()
+        new_comment = Comment(
+            content=comment_data['content'],
+            user_id=current_user.user_id,
+            post_id=comment_data['post_id']
+        )
+        db.session.add(new_comment)
+        db.session.commit()
+        
+        return comment_schema.jsonify(new_comment), 201
+    except ValidationError as err:
+        return err.messages, 400
+    except ValueError as err:
+        return {"error": str(err)}, 400
+
+# Update a comment
+@app.route('/comments/<int:comment_id>', methods=["PUT"])
+@token_auth.login_required
+@limiter.limit("100 per day")
+def update_comment(comment_id):
+    if not request.is_json:
+        return {"error": "Request body must be application/json"}, 400
+    try:
+        data = request.json
+        comment_data = comment_schema.load(data)
+
+        comment = db.session.get(Comment, comment_id)
+        if comment is None:
+            return {"error": f"Comment with ID {comment_id} does not exist"}, 404
+
+        current_user = token_auth.current_user()
+        if comment.user_id != current_user.user_id:
+            return {"error": "Unauthorized to update this comment"}, 403
+
+        comment.content = comment_data['content']
+        db.session.commit()
+
+        return comment_schema.jsonify(comment)
+    except ValidationError as err:
+        return err.messages, 400
+    except ValueError as err:
+        return {"error": str(err)}, 400
+
+# Delete a comment by ID (Admin Only)
+@app.route('/comments/<int:comment_id>', methods=["DELETE"])
+@token_auth.login_required(role='admin')
+@limiter.limit("100 per day")
+def delete_comment(comment_id):
+    comment = db.session.get(Comment, comment_id)
+    if comment is None:
+        return {"error": f"Comment with ID {comment_id} does not exist"}, 404
+
+    # The @token_auth.login_required(role='admin') decorator ensures that only admins can access this route.
+    # No need for further role checks inside the function:
+
+    # current_user = token_auth.current_user()
+    # if comment.user_id != current_user.user_id:
+    #     return {"error": "Unauthorized to delete this comment"}, 403
+
+    db.session.delete(comment)
+    db.session.commit()
+
+    return {"message": f"Comment with ID {comment_id} has been deleted"}, 200
+
+# List all comments for a specific post
+@app.route('/posts/<int:post_id>/comments', methods=["GET"])
+@token_auth.login_required
+@limiter.limit("100 per day")
+@cache.cached(timeout=60)
+def list_comments(post_id):
+    query = db.select(Comment).where(Comment.post_id == post_id)
+    comments = db.session.scalars(query).all()
+    return comments_schema.jsonify(comments)

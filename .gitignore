@@ -9,3 +9,15 @@ __pycache__/
 
 # Ignore the .env which has our environment variables
 .env
+
+# Ignore debug.log
+debug.log
+
+#Ignore a file to set up roles (a temporary file needed to assign roles to exisiting clients in database)
+setup_roles.py
+
+# Pytest is a work in progress
+test_integration.py
+
+# Ignore any .pytest_cache folders
+.pytest_cache
