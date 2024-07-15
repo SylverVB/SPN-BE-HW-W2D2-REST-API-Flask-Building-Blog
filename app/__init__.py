@@ -5,13 +5,19 @@ from app.limiter import limiter
 from app.caching import cache
 from app.swagger_docs import swaggerui_blueprint
 from app.models import Role, User
-# import logging
+import logging
 # import sys
 
 
 # Create an instance of the flask application
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///advanced_blog_api.db'
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///advanced_blog_api.db'
+
+database_url = os.environ.get('DATABASE_URL') or 'sqlite:///advanced_blog_api.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+
+# Log the database URI
+app.logger.info(f'Using database URL: {database_url}')
 
 # Initialize the app with the flask-sqlalchemy
 db.init_app(app)
