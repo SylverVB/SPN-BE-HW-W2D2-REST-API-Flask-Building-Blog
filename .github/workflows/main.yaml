@@ -54,6 +54,16 @@ jobs:
           python -m pip install -U pip
           python -m pip install -r requirements.txt
 
+      - name: Wait for Database to be Ready
+        run: sleep 10
+
+      - name: Debugging Database URL
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Database URL: $DATABASE_URL"
+          nslookup $(echo $DATABASE_URL | sed -e 's,^.*//,,' -e 's,:.*,,')
+      
       - name: Run any database migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
