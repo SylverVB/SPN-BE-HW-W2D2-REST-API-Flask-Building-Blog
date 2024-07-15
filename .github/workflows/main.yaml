@@ -3,6 +3,7 @@ name: Flask Advanced Blog API CI/CD
 on:
   push:
     branches: [main, master]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -57,15 +58,13 @@ jobs:
       - name: Export DATABASE_URL
         run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
 
+      - name: Test DNS Resolution
+        run: nslookup dpg-cqa6sojv2p9s73cs3d5g-a
+
       - name: Run any database migrations
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: flask db upgrade
 
       - name: Run the tests
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
         run: python -m unittest discover -v -s .
 
   deploy:
@@ -75,5 +74,5 @@ jobs:
     steps:
       - name: Deploy the App
         env:
-          deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-        run: curl "$deploy_url"
+          deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}  
+        run: curl -X POST "$deploy_url"
