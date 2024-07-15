@@ -26,13 +26,13 @@ jobs:
           python -m pip install -U pip
           python -m pip install -r requirements.txt
 
-      - name: Print debugging information
+      - name: Print environment variables
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          echo "Python Version: $(python --version)"
-          echo "Working Directory: $(pwd)"
-          echo "Contents of Working Directory: $(ls -l)"
-          echo "Contents of site-packages: $(ls -l venv/lib/python*/site-packages)"
-
+          echo "Database URL: $DATABASE_URL"
+          nslookup $(echo $DATABASE_URL | sed -e 's,^.*//,,' -e 's,:.*,,')
+          
   test:
     runs-on: ubuntu-latest
     steps:
