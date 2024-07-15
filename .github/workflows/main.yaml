@@ -55,10 +55,18 @@ jobs:
           python -m pip install -r requirements.txt
 
       - name: Run any database migrations
-        run: flask db upgrade
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          source venv/bin/activate
+          flask db upgrade
 
       - name: Run the tests
-        run: python -m unittest discover -v -s .
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          source venv/bin/activate
+          python -m unittest discover -v -s .
   
   deploy:
     runs-on: ubuntu-latest
@@ -67,5 +75,5 @@ jobs:
     steps:
       - name: Deploy the App
         env:
-          deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}  
+          deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: curl "$deploy_url"
