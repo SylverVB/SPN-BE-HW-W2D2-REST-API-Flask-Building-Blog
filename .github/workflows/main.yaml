@@ -26,13 +26,13 @@ jobs:
           python -m pip install -U pip
           python -m pip install -r requirements.txt
 
-      - name: Print environment variables
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Print debugging information
         run: |
-          echo "Database URL: $DATABASE_URL"
-          nslookup $(echo $DATABASE_URL | sed -e 's,^.*//,,' -e 's,:.*,,')
-          
+          echo "Python Version: $(python --version)"
+          echo "Working Directory: $(pwd)"
+          echo "Contents of Working Directory: $(ls -l)"
+          echo "Contents of site-packages: $(ls -l venv/lib/python*/site-packages)"
+
   test:
     runs-on: ubuntu-latest
     steps:
@@ -54,29 +54,11 @@ jobs:
           python -m pip install -U pip
           python -m pip install -r requirements.txt
 
-      - name: Wait for Database to be Ready
-        run: sleep 10
-
-      - name: Debugging Database URL
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          echo "Database URL: $DATABASE_URL"
-          nslookup $(echo $DATABASE_URL | sed -e 's,^.*//,,' -e 's,:.*,,')
-      
       - name: Run any database migrations
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          source venv/bin/activate
-          flask db upgrade
+        run: flask db upgrade
 
       - name: Run the tests
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          source venv/bin/activate
-          python -m unittest discover -v -s .
+        run: python -m unittest discover -v -s .
   
   deploy:
     runs-on: ubuntu-latest
@@ -85,5 +67,5 @@ jobs:
     steps:
       - name: Deploy the App
         env:
-          deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}  
         run: curl "$deploy_url"
