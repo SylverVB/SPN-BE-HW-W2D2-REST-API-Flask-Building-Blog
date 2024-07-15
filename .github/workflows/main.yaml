@@ -64,6 +64,13 @@ jobs:
           echo "Database URL: $DATABASE_URL"
           nslookup $(echo $DATABASE_URL | sed -e 's,^.*//,,' -e 's,:.*,,')
       
+      - name: Check database connection
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          sudo apt-get install -y postgresql-client
+          psql $DATABASE_URL -c '\l'
+
       - name: Run any database migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
