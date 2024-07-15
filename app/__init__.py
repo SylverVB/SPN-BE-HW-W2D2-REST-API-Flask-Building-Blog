@@ -11,7 +11,7 @@ from app.models import Role, User
 
 # Create an instance of the flask application
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///advanced_ecommerce.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///advanced_blog_api.db'
 
 # Initialize the app with the flask-sqlalchemy
 db.init_app(app)
