@@ -38,5 +38,18 @@ app.register_blueprint(swaggerui_blueprint, url_prefix='/api/docs')
 # logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler("debug.log")])
 # app.logger.setLevel(logging.INFO)
 
+# Enable foreign keys for SQLite
+@app.before_request
+def before_request():
+    if 'sqlite' in app.config['SQLALCHEMY_DATABASE_URI']:
+        from sqlalchemy import event
+        from sqlalchemy.engine import Engine
+
+        @event.listens_for(Engine, "connect")
+        def set_sqlite_pragma(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
+
 # Import the routes file so that it runs
 from . import routes, models  
