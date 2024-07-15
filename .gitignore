@@ -21,3 +21,6 @@ test_integration.py
 
 # Ignore any .pytest_cache folders
 .pytest_cache
+
+# Script to test SQLite Fallback Locally
+test_fallback.py
