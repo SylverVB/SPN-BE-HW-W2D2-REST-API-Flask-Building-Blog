@@ -249,11 +249,12 @@ class TestPostEndpoints(unittest.TestCase):
         mock_post = Post(post_id=1, title="Test Title", body="Test Content")
         mock_query = MagicMock()
         mock_query.scalars().all.return_value = [mock_post]
-        logger.debug(f"Mock execute return value: {mock_query.scalars().all()}")
         mock_execute.return_value = mock_query
 
+        logger.debug(f"Mock execute return value: {mock_query.scalars().all()}")
         token = encode_token(mock_user.user_id)
         logger.debug(f"Generated token: {token}")
+
         response = self.client.get('/posts', headers={'Authorization': f'Bearer {token}'})
         logger.debug(f"Response status code: {response.status_code}")
         logger.debug(f"Response data: {response.data}")
@@ -475,11 +476,12 @@ class TestCommentEndpoints(unittest.TestCase):
         mock_comment = Comment(comment_id=1, post_id=1, content="Test content for post")
         mock_query = MagicMock()
         mock_query.scalars().all.return_value = [mock_comment]
-        logger.debug(f"Mock execute return value: {mock_query.scalars().all()}")
         mock_execute.return_value = mock_query
 
+        logger.debug(f"Mock execute return value: {mock_query.scalars().all()}")
         token = encode_token(mock_user.user_id)
         logger.debug(f"Generated token: {token}")
+
         response = self.client.get('/posts/1/comments', headers={'Authorization': f'Bearer {token}'})
         logger.debug(f"Response status code: {response.status_code}")
         logger.debug(f"Response data: {response.data}")
