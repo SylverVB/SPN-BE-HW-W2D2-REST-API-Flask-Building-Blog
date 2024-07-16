@@ -9,7 +9,12 @@ from app.models import User, Post, Comment, Role
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.utils.util import encode_token
 from app.auth import token_auth, get_roles
+import logging
 # import sys
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 @app.route('/')
 @limiter.limit("100 per day")
@@ -49,17 +54,23 @@ def get_token():
 @limiter.limit("100 per day")
 @cache.cached(timeout=60)
 def get_all_users():
-    # app.logger.info("Entering get_all_users")
-    # sys.stdout.flush()
-    # Get any request query params aka request.args
-    args = request.args
-    page = args.get('page', 1, type=int)
-    per_page = args.get('per_page', 10, type=int)
-    query = db.select(User).limit(per_page).offset((page-1)*per_page) # select the User model, limit per page and offset
-    users = db.session.execute(query).scalars().all()
-    # app.logger.info(f"Fetched comments: {users}")
-    # sys.stdout.flush()
-    return users_schema.jsonify(users)
+    logger.info("Fetching all users")
+    try:
+        # app.logger.info("Entering get_all_users")
+        # sys.stdout.flush()
+        # Get any request query params aka request.args
+        args = request.args
+        page = args.get('page', 1, type=int)
+        per_page = args.get('per_page', 10, type=int)
+        query = db.select(User).limit(per_page).offset((page-1)*per_page) # select the User model, limit per page and offset
+        users = db.session.execute(query).scalars().all()
+        logger.debug(f"Users fetched: {users}")
+        # app.logger.info(f"Fetched comments: {users}")
+        # sys.stdout.flush()
+        return users_schema.jsonify(users)
+    except Exception as e:
+        logger.error(f"Error fetching users: {e}")
+        return {"error": "Failed to fetch users"}, 500
 
 # Get a single user by ID (Admin Only)
 @app.route('/users/<int:user_id>', methods=["GET"])
