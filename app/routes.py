@@ -4,17 +4,18 @@ from app.schemas.userSchema import user_input_schema, user_output_schema, users_
 from app.schemas.postSchema import post_schema, posts_schema
 from app.schemas.commentSchema import comment_schema, comments_schema
 from marshmallow import ValidationError
+from sqlalchemy.exc import SQLAlchemyError
 # from app.database import db
 from app.models import User, Post, Comment, Role
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.utils.util import encode_token
 from app.auth import token_auth, get_roles
-# import logging
-# import sys
+import logging
+import sys
 
-# # Configure logging
-# logging.basicConfig(level=logging.DEBUG)
-# logger = logging.getLogger(__name__)
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 @app.route('/')
 @limiter.limit("100 per day")
@@ -84,36 +85,83 @@ def get_single_user(user_id):
 def create_user():
     # Check if the request has a JSON body
     if not request.is_json:
-        return {"error": "Request body must be application/json"}, 400 # Bad Request by Client
+        return {"error": "Request body must be application/json"}, 400  # Bad Request by Client
+
     try:
         # Get the request JSON body
         data = request.json
+
         # Check if the body has all of the required fields
         user_data = user_input_schema.load(data)
-        # Query the user table to see if any users have that username or email
-        query = db.select(User).where( (User.username == user_data['username']) | (User.email == user_data['email']) )
-        check_users = db.session.scalars(query).all()
-        if check_users: # If there are users in the check_users list (empty list evaluates to false)
-            return {"error": "User with that username and/or email already exists"}, 400 # Bad Request by Client
 
-        # Create a new instance of User 
+        # Query the user table to see if any users have that username or email
+        query = db.select(User).where((User.username == user_data['username']) | (User.email == user_data['email']))
+        check_users = db.session.scalars(query).all()
+
+        if check_users:  # If there are users in the check_users list (empty list evaluates to false)
+            return {"error": "User with that username and/or email already exists"}, 400  # Bad Request by Client
+
+        # Create a new instance of User
         new_user = User(
             first_name=user_data['first_name'],
             last_name=user_data['last_name'],
             username=user_data['username'],
             email=user_data['email'],
-            password=generate_password_hash(user_data['password'])
+            password=generate_password_hash(user_data['password']),
+            role_id=user_data['role_id']  # Use the role_id from the user_data
         )
-        # and add to the database
+
+        # Add the new user to the database
         db.session.add(new_user)
         db.session.commit()
-        
+
         # Serialize the new user object and return with 201 status
-        return user_output_schema.jsonify(new_user), 201 # Created - Success
+        return user_output_schema.jsonify(new_user), 201  # Created - Success
+
     except ValidationError as err:
-        return err.messages, 400
+        return err.messages, 400  # Bad Request by Client
     except ValueError as err:
-        return {"error": str(err)}, 400
+        return {"error": str(err)}, 400  # Bad Request by Client
+    except SQLAlchemyError as err:
+        return {"error": "An error occurred while creating the user: " + str(err)}, 500  # Internal Server Error
+
+
+# # Create a new user
+# @app.route('/users', methods=["POST"])
+# @limiter.limit("100 per day")
+# def create_user():
+#     # Check if the request has a JSON body
+#     if not request.is_json:
+#         return {"error": "Request body must be application/json"}, 400 # Bad Request by Client
+#     try:
+#         # Get the request JSON body
+#         data = request.json
+#         # Check if the body has all of the required fields
+#         user_data = user_input_schema.load(data)
+#         # Query the user table to see if any users have that username or email
+#         query = db.select(User).where( (User.username == user_data['username']) | (User.email == user_data['email']) )
+#         check_users = db.session.scalars(query).all()
+#         if check_users: # If there are users in the check_users list (empty list evaluates to false)
+#             return {"error": "User with that username and/or email already exists"}, 400 # Bad Request by Client
+
+#         # Create a new instance of User 
+#         new_user = User(
+#             first_name=user_data['first_name'],
+#             last_name=user_data['last_name'],
+#             username=user_data['username'],
+#             email=user_data['email'],
+#             password=generate_password_hash(user_data['password'])
+#         )
+#         # and add to the database
+#         db.session.add(new_user)
+#         db.session.commit()
+        
+#         # Serialize the new user object and return with 201 status
+#         return user_output_schema.jsonify(new_user), 201 # Created - Success
+#     except ValidationError as err:
+#         return err.messages, 400
+#     except ValueError as err:
+#         return {"error": str(err)}, 400
 
 # Admin-only Endpoint
 @app.route('/admin')

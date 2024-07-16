@@ -1,6 +1,7 @@
 from app.schemas import ma
-from marshmallow import fields, post_load
+from marshmallow import fields, post_load, ValidationError
 from app.models import Role
+from app.database import db
 
 
 # Define the Customer Schema
@@ -13,10 +14,19 @@ class UserSchema(ma.Schema):
     password = fields.String(required=True)
     role = fields.String(required=False)
 
+    # @post_load
+    # def make_user(self, data, **kwargs):
+    #     if 'role' in data and isinstance(data['role'], str):
+    #         data['role'] = Role(role_name=data['role'])
+    #     return data
+
     @post_load
     def make_user(self, data, **kwargs):
         if 'role' in data and isinstance(data['role'], str):
-            data['role'] = Role(role_name=data['role'])
+            role = db.session.execute(db.select(Role).filter_by(role_name=data['role'])).scalar_one_or_none()
+            if not role:
+                raise ValidationError(f"Role '{data['role']}' does not exist.")
+            data['role_id'] = role.role_id
         return data
 
 # Create instances of the schema

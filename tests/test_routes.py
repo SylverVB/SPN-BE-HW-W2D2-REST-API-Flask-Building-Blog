@@ -3,6 +3,7 @@ from unittest.mock import patch, MagicMock
 from app import app
 from app.utils.util import encode_token
 from faker import Faker
+from app.models import Role
 # import logging
 # import sys
 
@@ -62,16 +63,22 @@ class TestUserEndpoints(unittest.TestCase):
     
     @patch('app.routes.db.session.add')
     @patch('app.routes.db.session.commit')
+    @patch('app.routes.db.session.execute')
     @patch('app.routes.db.session.scalars')
-    def test_create_user(self, mock_scalars, mock_commit, mock_add):
+    def test_create_user(self, mock_scalars, mock_execute, mock_commit, mock_add):
         # Simulate no existing users with the same username or email
         mock_query = MagicMock()
         mock_query.all.return_value = []
         mock_scalars.return_value = mock_query
+        
+        # Simulate fetching the role from the database
+        mock_role = Role(role_id=1, role_name='admin')
+        mock_execute.return_value.scalar_one_or_none.return_value = mock_role
 
         request_body = {
             "first_name": fake.first_name(),
             "last_name": fake.last_name(),
+            "role": "admin",
             "username": fake.user_name(),
             "email": fake.email(),
             "password": fake.password()

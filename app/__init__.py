@@ -8,11 +8,18 @@ from app.models import Role, User
 # import logging
 # import sys
 
+# from app import app
+# import logging
+
+# logging.basicConfig(level=logging.DEBUG)
+# app.logger.setLevel(logging.DEBUG)
+
+
 
 # Create an instance of the flask application
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
-# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///advanced_blog_api.db'
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///advanced_blog_api.db'
 
 # database_url = os.environ.get('DATABASE_URL') or 'sqlite:///advanced_blog_api.db'
 # app.config['SQLALCHEMY_DATABASE_URI'] = database_url
