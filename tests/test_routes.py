@@ -238,14 +238,16 @@ class TestPostEndpoints(unittest.TestCase):
     def test_get_all_posts(self, mock_get, mock_execute, mock_current_user, mock_verify_token):
         logger.debug("Starting test_get_all_posts")
 
+        # Set up mock user with admin role
         mock_user = MagicMock()
         mock_user.user_id = 1
         mock_user.role = MagicMock()
         mock_user.role.role_name = 'admin'
         mock_current_user.return_value = mock_user
         mock_verify_token.return_value = mock_user
-        mock_get.return_value = mock_user
+        mock_get.return_value = mock_user  # This ensures mock_get returns the mock_user
 
+        # Set up mock post data
         mock_post = Post(post_id=1, title="Test Title", body="Test Content")
         mock_query = MagicMock()
         mock_query.scalars().all.return_value = [mock_post]
@@ -255,10 +257,12 @@ class TestPostEndpoints(unittest.TestCase):
         token = encode_token(mock_user.user_id)
         logger.debug(f"Generated token: {token}")
 
+        # Perform the GET request to the /posts endpoint
         response = self.client.get('/posts', headers={'Authorization': f'Bearer {token}'})
         logger.debug(f"Response status code: {response.status_code}")
         logger.debug(f"Response data: {response.data}")
 
+        # Assertions
         self.assertEqual(response.status_code, 200)
         self.assertIsInstance(response.json, list)
         self.assertGreater(len(response.json), 0)
@@ -465,14 +469,16 @@ class TestCommentEndpoints(unittest.TestCase):
     def test_list_comments_for_post(self, mock_get, mock_execute, mock_current_user, mock_verify_token):
         logger.debug("Starting test_list_comments_for_post")
 
+        # Set up mock user with admin role
         mock_user = MagicMock()
         mock_user.user_id = 1
         mock_user.role = MagicMock()
         mock_user.role.role_name = 'admin'
         mock_current_user.return_value = mock_user
         mock_verify_token.return_value = mock_user
-        mock_get.return_value = mock_user
+        mock_get.return_value = mock_user  # This ensures mock_get returns the mock_user
 
+        # Set up mock comment data
         mock_comment = Comment(comment_id=1, post_id=1, content="Test content for post")
         mock_query = MagicMock()
         mock_query.scalars().all.return_value = [mock_comment]
@@ -482,10 +488,12 @@ class TestCommentEndpoints(unittest.TestCase):
         token = encode_token(mock_user.user_id)
         logger.debug(f"Generated token: {token}")
 
+        # Perform the GET request to the /posts/1/comments endpoint
         response = self.client.get('/posts/1/comments', headers={'Authorization': f'Bearer {token}'})
         logger.debug(f"Response status code: {response.status_code}")
         logger.debug(f"Response data: {response.data}")
 
+        # Assertions
         self.assertEqual(response.status_code, 200)
         self.assertIsInstance(response.json, list)
         self.assertGreater(len(response.json), 0)
