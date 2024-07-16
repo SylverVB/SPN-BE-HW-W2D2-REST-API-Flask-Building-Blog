@@ -266,6 +266,7 @@ class TestPostEndpoints(unittest.TestCase):
         self.assertIn('body', response.json[0])
 
 
+
     # @patch('app.auth.token_auth.verify_token')
     # @patch('app.auth.token_auth.current_user')
     # @patch('app.routes.db.session.execute')
@@ -489,6 +490,7 @@ class TestCommentEndpoints(unittest.TestCase):
         self.assertIn('comment_id', response.json[0])
         self.assertIn('post_id', response.json[0])
         self.assertIn('content', response.json[0])
+
 
 
 
