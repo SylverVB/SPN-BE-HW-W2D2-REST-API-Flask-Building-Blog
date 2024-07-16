@@ -3,7 +3,7 @@ from unittest.mock import patch, MagicMock
 from app import app
 from app.utils.util import encode_token
 from faker import Faker
-from app.models import Role
+from app.models import Role, Post, Comment
 import logging
 
 # Set up logging
@@ -244,14 +244,9 @@ class TestPostEndpoints(unittest.TestCase):
         mock_user.role.role_name = 'admin'
         mock_current_user.return_value = mock_user
         mock_verify_token.return_value = mock_user
-
         mock_get.return_value = mock_user
 
-        mock_post = MagicMock()
-        mock_post.post_id = 1
-        mock_post.title = "Test Title"
-        mock_post.content = "Test Content"
-        
+        mock_post = Post(post_id=1, title="Test Title", content="Test Content")
         mock_query = MagicMock()
         mock_query.scalars().all.return_value = [mock_post]
         logger.debug(f"Mock execute return value: {mock_query.scalars().all()}")
@@ -474,21 +469,16 @@ class TestCommentEndpoints(unittest.TestCase):
         mock_user.role.role_name = 'admin'
         mock_current_user.return_value = mock_user
         mock_verify_token.return_value = mock_user
-
         mock_get.return_value = mock_user
 
-        mock_comment = MagicMock()
-        mock_comment.comment_id = 1
-        mock_comment.post_id = 1
-        mock_comment.content = "Test content for post"
+        mock_comment = Comment(comment_id=1, post_id=1, content="Test content for post")
         mock_query = MagicMock()
         mock_query.scalars().all.return_value = [mock_comment]
         logger.debug(f"Mock execute return value: {mock_query.scalars().all()}")
         mock_execute.return_value = mock_query
 
-        logger.debug(f"Mock execute return value: {mock_execute.return_value.scalars().all.return_value}")
-
         token = encode_token(mock_user.user_id)
+        logger.debug(f"Generated token: {token}")
         response = self.client.get('/posts/1/comments', headers={'Authorization': f'Bearer {token}'})
         logger.debug(f"Response status code: {response.status_code}")
         logger.debug(f"Response data: {response.data}")
