@@ -249,11 +249,13 @@ class TestPostEndpoints(unittest.TestCase):
 
         mock_post = MagicMock()
         mock_post.post_id = 1
+        mock_post.title = "Test Title"
+        mock_post.content = "Test Content"
+        
         mock_query = MagicMock()
         mock_query.scalars().all.return_value = [mock_post]
+        logger.debug(f"Mock execute return value: {mock_query.scalars().all()}")
         mock_execute.return_value = mock_query
-
-        logger.debug(f"Mock execute return value: {mock_execute.return_value.scalars().all.return_value}")
 
         token = encode_token(mock_user.user_id)
         logger.debug(f"Generated token: {token}")
@@ -265,6 +267,8 @@ class TestPostEndpoints(unittest.TestCase):
         self.assertIsInstance(response.json, list)
         self.assertGreater(len(response.json), 0)
         self.assertIn('post_id', response.json[0])
+        self.assertIn('title', response.json[0])
+        self.assertIn('content', response.json[0])
 
 
     # @patch('app.auth.token_auth.verify_token')
@@ -475,8 +479,11 @@ class TestCommentEndpoints(unittest.TestCase):
 
         mock_comment = MagicMock()
         mock_comment.comment_id = 1
+        mock_comment.post_id = 1
+        mock_comment.content = "Test content for post"
         mock_query = MagicMock()
         mock_query.scalars().all.return_value = [mock_comment]
+        logger.debug(f"Mock execute return value: {mock_query.scalars().all()}")
         mock_execute.return_value = mock_query
 
         logger.debug(f"Mock execute return value: {mock_execute.return_value.scalars().all.return_value}")
@@ -490,6 +497,8 @@ class TestCommentEndpoints(unittest.TestCase):
         self.assertIsInstance(response.json, list)
         self.assertGreater(len(response.json), 0)
         self.assertIn('comment_id', response.json[0])
+        self.assertIn('post_id', response.json[0])
+        self.assertIn('content', response.json[0])
 
 
 
