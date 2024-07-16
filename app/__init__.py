@@ -1,31 +1,19 @@
 import os
-from flask import Flask # Import the Flask class from the flask library
-from app.database import db, migrate # Import the instance of SQLAlchemy (db) and instance of Migrate (migrate) from database module
+from flask import Flask
+from app.database import db, migrate
 from app.limiter import limiter
 from app.caching import cache
 from app.swagger_docs import swaggerui_blueprint
 from app.models import Role, User
-# import logging
-# import sys
-
-# from app import app
-# import logging
-
-# logging.basicConfig(level=logging.DEBUG)
-# app.logger.setLevel(logging.DEBUG)
-
-
+from flask.cli import with_appcontext
+import click
 
 # Create an instance of the flask application
 app = Flask(__name__)
-# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///advanced_blog_api.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 
 # database_url = os.environ.get('DATABASE_URL') or 'sqlite:///advanced_blog_api.db'
 # app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-
-# # Log the database URI
-# app.logger.info(f'Using database URL: {database_url}')
 
 # Initialize the app with the flask-sqlalchemy
 db.init_app(app)
@@ -42,22 +30,17 @@ cache.init_app(app)
 # Register the Swagger UI Blueprint
 app.register_blueprint(swaggerui_blueprint, url_prefix='/api/docs')
 
-# # Set up logging to stdout and file
-# logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler("debug.log")])
-# app.logger.setLevel(logging.INFO)
-
-# # Enable foreign keys for SQLite
-# @app.before_request
-# def before_request():
-#     if 'sqlite' in app.config['SQLALCHEMY_DATABASE_URI']:
-#         from sqlalchemy import event
-#         from sqlalchemy.engine import Engine
-
-#         @event.listens_for(Engine, "connect")
-#         def set_sqlite_pragma(dbapi_connection, connection_record):
-#             cursor = dbapi_connection.cursor()
-#             cursor.execute("PRAGMA foreign_keys=ON")
-#             cursor.close()
-
 # Import the routes file so that it runs
-from . import routes, models  
+from . import routes, models
+
+# Import the setup_roles_and_update_users function
+from setup_roles import setup_roles_and_update_users
+
+@click.command(name='setup_roles')
+@with_appcontext
+def setup_roles_command():
+    """Command to set up and update roles."""
+    setup_roles_and_update_users()
+
+# Add the command to the Flask CLI
+app.cli.add_command(setup_roles_command)

@@ -79,29 +79,26 @@ def get_single_user(user_id):
         return user_output_schema.jsonify(user)
     return {"error": f"User with ID {user_id} does not exist"}, 404 # Not Found
 
-# Create a new user
 @app.route('/users', methods=["POST"])
 @limiter.limit("100 per day")
 def create_user():
-    # Check if the request has a JSON body
     if not request.is_json:
-        return {"error": "Request body must be application/json"}, 400  # Bad Request by Client
+        return jsonify({"error": "Request body must be application/json"}), 400
 
     try:
-        # Get the request JSON body
         data = request.json
 
-        # Check if the body has all of the required fields
+        # Validate and deserialize input
         user_data = user_input_schema.load(data)
 
-        # Query the user table to see if any users have that username or email
+        # Check if the user already exists
         query = db.select(User).where((User.username == user_data['username']) | (User.email == user_data['email']))
         check_users = db.session.scalars(query).all()
 
-        if check_users:  # If there are users in the check_users list (empty list evaluates to false)
-            return {"error": "User with that username and/or email already exists"}, 400  # Bad Request by Client
+        if check_users:
+            return jsonify({"error": "User with that username and/or email already exists"}), 400
 
-        # Create a new instance of User
+        # Create new user
         new_user = User(
             first_name=user_data['first_name'],
             last_name=user_data['last_name'],
@@ -111,19 +108,17 @@ def create_user():
             role_id=user_data['role_id']  # Use the role_id from the user_data
         )
 
-        # Add the new user to the database
         db.session.add(new_user)
         db.session.commit()
 
-        # Serialize the new user object and return with 201 status
-        return user_output_schema.jsonify(new_user), 201  # Created - Success
+        return user_output_schema.jsonify(new_user), 201
 
     except ValidationError as err:
-        return err.messages, 400  # Bad Request by Client
+        return jsonify(err.messages), 400
     except ValueError as err:
-        return {"error": str(err)}, 400  # Bad Request by Client
+        return jsonify({"error": str(err)}), 400
     except SQLAlchemyError as err:
-        return {"error": "An error occurred while creating the user: " + str(err)}, 500  # Internal Server Error
+        return jsonify({"error": "An error occurred while creating the user: " + str(err)}), 500
 
 
 # # Create a new user

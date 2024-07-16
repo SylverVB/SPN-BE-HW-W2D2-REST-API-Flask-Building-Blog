@@ -23,6 +23,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          source venv/bin/activate
           python -m pip install -U pip
           python -m pip install -r requirements.txt
 
@@ -51,6 +52,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          source venv/bin/activate
           python -m pip install -U pip
           python -m pip install -r requirements.txt
 
@@ -58,10 +60,19 @@ jobs:
         run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
 
       - name: Run any database migrations
-        run: flask db upgrade
+        run: |
+          source venv/bin/activate
+          flask db upgrade
+
+      - name: Set up roles
+        run: |
+          source venv/bin/activate
+          flask setup_roles
 
       - name: Run the tests
-        run: python -m unittest discover -v -s .
+        run: |
+          source venv/bin/activate
+          python -m unittest discover -v -s .
 
   deploy:
     runs-on: ubuntu-latest
