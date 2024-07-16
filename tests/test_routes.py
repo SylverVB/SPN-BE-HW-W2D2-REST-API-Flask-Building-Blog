@@ -103,29 +103,29 @@ class TestUserEndpoints(unittest.TestCase):
         response = self.client.delete('/users/1', headers={'Authorization': f'Bearer {token}'})
         self.assertEqual(response.status_code, 200)
 
-    # @patch('app.auth.token_auth.verify_token')
-    # @patch('app.auth.token_auth.current_user')
-    # @patch('app.routes.db.session.execute')
-    # def test_get_all_users(self, mock_execute, mock_current_user, mock_verify_token):
-    #     mock_user = MagicMock()
-    #     mock_user.user_id = 1
-    #     mock_user.role.role_name = 'admin'
-    #     mock_current_user.return_value = mock_user
-    #     mock_verify_token.return_value = mock_user
+    @patch('app.auth.token_auth.verify_token')
+    @patch('app.auth.token_auth.current_user')
+    @patch('app.routes.db.session.execute')
+    def test_get_all_users(self, mock_execute, mock_current_user, mock_verify_token):
+        mock_user = MagicMock()
+        mock_user.user_id = 1
+        mock_user.role.role_name = 'admin'
+        mock_current_user.return_value = mock_user
+        mock_verify_token.return_value = mock_user
         
-    #     # mock_get.return_value = mock_user
+        # mock_get.return_value = mock_user
 
-    #     mock_query = MagicMock()
-    #     mock_query.scalars().all.return_value = [mock_user]
-    #     mock_execute.return_value = mock_query
+        mock_query = MagicMock()
+        mock_query.scalars().all.return_value = [mock_user]
+        mock_execute.return_value = mock_query
 
-    #     token = encode_token(mock_user.user_id)
-    #     # logger.info(f"Token: {token}")
-    #     response = self.client.get('/users', headers={'Authorization': f'Bearer {token}'})
-    #     # logger.info(f"Response status code: {response.status_code}")
-    #     # if response.status_code != 200:
-    #         # logger.error(f"Error response data: {response.data}")
-    #     self.assertEqual(response.status_code, 200)
+        token = encode_token(mock_user.user_id)
+        # logger.info(f"Token: {token}")
+        response = self.client.get('/users', headers={'Authorization': f'Bearer {token}'})
+        # logger.info(f"Response status code: {response.status_code}")
+        # if response.status_code != 200:
+            # logger.error(f"Error response data: {response.data}")
+        self.assertEqual(response.status_code, 200)
 
 
     @patch('app.auth.token_auth.verify_token')
@@ -172,28 +172,28 @@ class TestPostEndpoints(unittest.TestCase):
     def setUp(self):
         self.client = app.test_client()
 
-    # @patch('app.auth.token_auth.verify_token')
-    # @patch('app.auth.token_auth.current_user')
-    # @patch('app.routes.db.session.add')
-    # @patch('app.routes.db.session.commit')
-    # def test_create_post(self, mock_commit, mock_add, mock_current_user, mock_verify_token):
-    #     mock_user = MagicMock()
-    #     mock_user.user_id = 1
-    #     mock_current_user.return_value = mock_user
-    #     mock_verify_token.return_value = mock_user
+    @patch('app.auth.token_auth.verify_token')
+    @patch('app.auth.token_auth.current_user')
+    @patch('app.routes.db.session.add')
+    @patch('app.routes.db.session.commit')
+    def test_create_post(self, mock_commit, mock_add, mock_current_user, mock_verify_token):
+        mock_user = MagicMock()
+        mock_user.user_id = 1
+        mock_current_user.return_value = mock_user
+        mock_verify_token.return_value = mock_user
 
-    #     request_body = {
-    #         "title": fake.sentence(),
-    #         "body": fake.text(),
-    #     }
+        request_body = {
+            "title": fake.sentence(),
+            "body": fake.text(),
+        }
 
-    #     token = encode_token(mock_user.user_id)
-    #     # logger = logging.getLogger(__name__)
-    #     # logger.info(f"Token for test: {token}")
-    #     response = self.client.post('/posts', json=request_body, headers={'Authorization': f'Bearer {token}'})
-    #     # logger.info(f"Response status code: {response.status_code}")
-    #     # logger.info(f"Response data: {response.data}")
-    #     self.assertEqual(response.status_code, 201)
+        token = encode_token(mock_user.user_id)
+        # logger = logging.getLogger(__name__)
+        # logger.info(f"Token for test: {token}")
+        response = self.client.post('/posts', json=request_body, headers={'Authorization': f'Bearer {token}'})
+        # logger.info(f"Response status code: {response.status_code}")
+        # logger.info(f"Response data: {response.data}")
+        self.assertEqual(response.status_code, 201)
 
     @patch('app.auth.token_auth.verify_token')
     @patch('app.auth.token_auth.current_user')
@@ -214,28 +214,28 @@ class TestPostEndpoints(unittest.TestCase):
         response = self.client.delete('/posts/1', headers={'Authorization': f'Bearer {token}'})
         self.assertEqual(response.status_code, 200)
 
-    # @patch('app.auth.token_auth.verify_token')
-    # @patch('app.auth.token_auth.current_user')
-    # @patch('app.routes.db.session.execute')
-    # def test_get_all_posts(self, mock_execute, mock_current_user, mock_verify_token):
-    #     mock_user = MagicMock()
-    #     mock_user.user_id = 1
-    #     mock_current_user.return_value = mock_user
-    #     mock_verify_token.return_value = mock_user
+    @patch('app.auth.token_auth.verify_token')
+    @patch('app.auth.token_auth.current_user')
+    @patch('app.routes.db.session.execute')
+    def test_get_all_posts(self, mock_execute, mock_current_user, mock_verify_token):
+        mock_user = MagicMock()
+        mock_user.user_id = 1
+        mock_current_user.return_value = mock_user
+        mock_verify_token.return_value = mock_user
 
-    #     mock_post = MagicMock()
-    #     mock_post.post_id = 1
-    #     mock_query = MagicMock()
-    #     mock_query.scalars().all.return_value = [mock_post]
-    #     mock_execute.return_value = mock_query
+        mock_post = MagicMock()
+        mock_post.post_id = 1
+        mock_query = MagicMock()
+        mock_query.scalars().all.return_value = [mock_post]
+        mock_execute.return_value = mock_query
 
-    #     token = encode_token(mock_user.user_id)
-    #     response = self.client.get('/posts', headers={'Authorization': f'Bearer {token}'})
-    #     # logger.info(f"Token: {token}")
-    #     # logger.info(f"Response status code: {response.status_code}")
-    #     # logger.info(f"Response data: {response.data}")
-    #     # sys.stdout.flush()
-    #     self.assertEqual(response.status_code, 200)
+        token = encode_token(mock_user.user_id)
+        response = self.client.get('/posts', headers={'Authorization': f'Bearer {token}'})
+        # logger.info(f"Token: {token}")
+        # logger.info(f"Response status code: {response.status_code}")
+        # logger.info(f"Response data: {response.data}")
+        # sys.stdout.flush()
+        self.assertEqual(response.status_code, 200)
 
     @patch('app.auth.token_auth.verify_token')
     @patch('app.auth.token_auth.current_user')
@@ -283,24 +283,24 @@ class TestCommentEndpoints(unittest.TestCase):
     def setUp(self):
         self.client = app.test_client()
 
-    # @patch('app.auth.token_auth.verify_token')
-    # @patch('app.auth.token_auth.current_user')
-    # @patch('app.routes.db.session.add')
-    # @patch('app.routes.db.session.commit')
-    # def test_create_comment(self, mock_commit, mock_add, mock_current_user, mock_verify_token):
-    #     mock_user = MagicMock()
-    #     mock_user.user_id = 1
-    #     mock_current_user.return_value = mock_user
-    #     mock_verify_token.return_value = mock_user
+    @patch('app.auth.token_auth.verify_token')
+    @patch('app.auth.token_auth.current_user')
+    @patch('app.routes.db.session.add')
+    @patch('app.routes.db.session.commit')
+    def test_create_comment(self, mock_commit, mock_add, mock_current_user, mock_verify_token):
+        mock_user = MagicMock()
+        mock_user.user_id = 1
+        mock_current_user.return_value = mock_user
+        mock_verify_token.return_value = mock_user
 
-    #     request_body = {
-    #         "content": fake.text(),
-    #         "post_id": 1,
-    #     }
+        request_body = {
+            "content": fake.text(),
+            "post_id": 1,
+        }
 
-    #     token = encode_token(mock_user.user_id)
-    #     response = self.client.post('/comments', json=request_body, headers={'Authorization': f'Bearer {token}'})
-    #     self.assertEqual(response.status_code, 201)
+        token = encode_token(mock_user.user_id)
+        response = self.client.post('/comments', json=request_body, headers={'Authorization': f'Bearer {token}'})
+        self.assertEqual(response.status_code, 201)
 
     @patch('app.auth.token_auth.verify_token')
     @patch('app.auth.token_auth.current_user')
@@ -324,70 +324,70 @@ class TestCommentEndpoints(unittest.TestCase):
         response = self.client.delete('/comments/1', headers={'Authorization': f'Bearer {token}'})
         self.assertEqual(response.status_code, 200)
 
-    # @patch('app.auth.token_auth.verify_token')
-    # @patch('app.auth.token_auth.current_user')
-    # @patch('app.routes.db.session.execute')
-    # def test_get_all_comments(self, mock_execute, mock_current_user, mock_verify_token):
-    #     mock_user = MagicMock()
-    #     mock_user.user_id = 1
-    #     mock_current_user.return_value = mock_user
-    #     mock_verify_token.return_value = mock_user
+    @patch('app.auth.token_auth.verify_token')
+    @patch('app.auth.token_auth.current_user')
+    @patch('app.routes.db.session.execute')
+    def test_get_all_comments(self, mock_execute, mock_current_user, mock_verify_token):
+        mock_user = MagicMock()
+        mock_user.user_id = 1
+        mock_current_user.return_value = mock_user
+        mock_verify_token.return_value = mock_user
 
-    #     mock_comment = MagicMock()
-    #     mock_comment.comment_id = 1
-    #     mock_query = MagicMock()
-    #     mock_query.scalars().all.return_value = [mock_comment]
-    #     mock_execute.return_value = mock_query
+        mock_comment = MagicMock()
+        mock_comment.comment_id = 1
+        mock_query = MagicMock()
+        mock_query.scalars().all.return_value = [mock_comment]
+        mock_execute.return_value = mock_query
 
-    #     token = encode_token(mock_user.user_id)
-    #     response = self.client.get('/comments', headers={'Authorization': f'Bearer {token}'})
-    #     self.assertEqual(response.status_code, 200)
+        token = encode_token(mock_user.user_id)
+        response = self.client.get('/comments', headers={'Authorization': f'Bearer {token}'})
+        self.assertEqual(response.status_code, 200)
 
-    # @patch('app.auth.token_auth.verify_token')
-    # @patch('app.auth.token_auth.current_user')
-    # @patch('app.routes.db.session.get')
-    # def test_get_single_comment(self, mock_get, mock_current_user, mock_verify_token):
-    #     mock_user = MagicMock()
-    #     mock_user.user_id = 1
-    #     mock_current_user.return_value = mock_user
-    #     mock_verify_token.return_value = mock_user
+    @patch('app.auth.token_auth.verify_token')
+    @patch('app.auth.token_auth.current_user')
+    @patch('app.routes.db.session.get')
+    def test_get_single_comment(self, mock_get, mock_current_user, mock_verify_token):
+        mock_user = MagicMock()
+        mock_user.user_id = 1
+        mock_current_user.return_value = mock_user
+        mock_verify_token.return_value = mock_user
 
-    #     mock_comment = MagicMock()
-    #     mock_comment.comment_id = 1
-    #     mock_get.return_value = mock_comment
+        mock_comment = MagicMock()
+        mock_comment.comment_id = 1
+        mock_get.return_value = mock_comment
 
-    #     token = encode_token(mock_user.user_id)
-    #     response = self.client.get('/comments/1', headers={'Authorization': f'Bearer {token}'})
-    #     self.assertEqual(response.status_code, 200)
+        token = encode_token(mock_user.user_id)
+        response = self.client.get('/comments/1', headers={'Authorization': f'Bearer {token}'})
+        self.assertEqual(response.status_code, 200)
 
-    # @patch('app.auth.token_auth.verify_token')
-    # @patch('app.auth.token_auth.current_user')
-    # @patch('app.routes.db.session.execute')
-    # def test_list_comments(self, mock_execute, mock_current_user, mock_verify_token):
-    #     mock_user = MagicMock()
-    #     mock_user.user_id = 1
-    #     mock_current_user.return_value = mock_user
-    #     mock_verify_token.return_value = mock_user
+    @patch('app.auth.token_auth.verify_token')
+    @patch('app.auth.token_auth.current_user')
+    @patch('app.routes.db.session.execute')
+    def test_list_comments(self, mock_execute, mock_current_user, mock_verify_token):
+        mock_user = MagicMock()
+        mock_user.user_id = 1
+        mock_current_user.return_value = mock_user
+        mock_verify_token.return_value = mock_user
 
-    #     mock_comment = MagicMock()
-    #     mock_comment.comment_id = 1
-    #     mock_comment.post_id = 1
-    #     mock_comment.content = fake.sentence()
-    #     mock_comment.user_id = mock_user.user_id
+        mock_comment = MagicMock()
+        mock_comment.comment_id = 1
+        mock_comment.post_id = 1
+        mock_comment.content = fake.sentence()
+        mock_comment.user_id = mock_user.user_id
 
-    #     mock_query = MagicMock()
-    #     mock_query.scalars().all.return_value = [mock_comment]
-    #     mock_execute.return_value = mock_query
+        mock_query = MagicMock()
+        mock_query.scalars().all.return_value = [mock_comment]
+        mock_execute.return_value = mock_query
 
-    #     token = encode_token(mock_user.user_id)
-    #     response = self.client.get('/comments', headers={'Authorization': f'Bearer {token}'})
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertIsInstance(response.json, list)
-    #     self.assertGreater(len(response.json), 0)
-    #     self.assertIn('comment_id', response.json[0])
-    #     self.assertIn('content', response.json[0])
-    #     self.assertIn('user_id', response.json[0])
-    #     self.assertIn('post_id', response.json[0])
+        token = encode_token(mock_user.user_id)
+        response = self.client.get('/comments', headers={'Authorization': f'Bearer {token}'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIsInstance(response.json, list)
+        self.assertGreater(len(response.json), 0)
+        self.assertIn('comment_id', response.json[0])
+        self.assertIn('content', response.json[0])
+        self.assertIn('user_id', response.json[0])
+        self.assertIn('post_id', response.json[0])
 
     @patch('app.auth.token_auth.verify_token')
     @patch('app.auth.token_auth.current_user')
