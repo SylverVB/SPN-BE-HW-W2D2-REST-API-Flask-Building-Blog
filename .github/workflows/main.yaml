@@ -56,11 +56,11 @@ jobs:
           python -m pip install -U pip
           python -m pip install -r requirements.txt
 
-      - name: Export DATABASE_URL
-        run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
+      - name: Set up SQLite Database URL
+        run: echo "DATABASE_URL=sqlite:///$(pwd)/test.db" >> $GITHUB_ENV
 
       - name: Print DATABASE_URL for debugging
-        run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"
+        run: echo "DATABASE_URL=${{ env.DATABASE_URL }}"
 
       - name: Run any database migrations
         run: |
@@ -70,8 +70,7 @@ jobs:
       - name: Check Database Content
         run: |
           source venv/bin/activate
-          sqlite3 your_database.db "SELECT * FROM user;"
-          sqlite3 your_database.db "SELECT * FROM post;"
+          sqlite3 $(pwd)/test.db "SELECT name FROM sqlite_master WHERE type='table';"
 
       - name: Set up roles
         run: |
@@ -81,7 +80,7 @@ jobs:
       - name: Check Roles Setup
         run: |
           source venv/bin/activate
-          sqlite3 your_database.db "SELECT * FROM role;"
+          sqlite3 $(pwd)/test.db "SELECT * FROM role;"
 
       - name: Run the tests
         run: |
