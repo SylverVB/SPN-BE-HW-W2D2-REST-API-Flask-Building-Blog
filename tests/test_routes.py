@@ -4,6 +4,11 @@ from app import app
 from app.utils.util import encode_token
 from faker import Faker
 from app.models import Role
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 fake = Faker()
 
@@ -225,11 +230,14 @@ class TestPostEndpoints(unittest.TestCase):
         response = self.client.delete('/posts/1', headers={'Authorization': f'Bearer {token}'})
         self.assertEqual(response.status_code, 200)
 
+
     @patch('app.auth.token_auth.verify_token')
     @patch('app.auth.token_auth.current_user')
     @patch('app.routes.db.session.execute')
     @patch('app.routes.db.session.get')
     def test_get_all_posts(self, mock_get, mock_execute, mock_current_user, mock_verify_token):
+        logger.debug("Starting test_get_all_posts")
+
         mock_user = MagicMock()
         mock_user.user_id = 1
         mock_user.role = MagicMock()
@@ -246,11 +254,42 @@ class TestPostEndpoints(unittest.TestCase):
         mock_execute.return_value = mock_query
 
         token = encode_token(mock_user.user_id)
+        logger.debug(f"Generated token: {token}")
         response = self.client.get('/posts', headers={'Authorization': f'Bearer {token}'})
+        logger.debug(f"Response status code: {response.status_code}")
+        logger.debug(f"Response data: {response.data}")
+
         self.assertEqual(response.status_code, 200)
         self.assertIsInstance(response.json, list)
         self.assertGreater(len(response.json), 0)
         self.assertIn('post_id', response.json[0])
+
+    # @patch('app.auth.token_auth.verify_token')
+    # @patch('app.auth.token_auth.current_user')
+    # @patch('app.routes.db.session.execute')
+    # @patch('app.routes.db.session.get')
+    # def test_get_all_posts(self, mock_get, mock_execute, mock_current_user, mock_verify_token):
+    #     mock_user = MagicMock()
+    #     mock_user.user_id = 1
+    #     mock_user.role = MagicMock()
+    #     mock_user.role.role_name = 'admin'
+    #     mock_current_user.return_value = mock_user
+    #     mock_verify_token.return_value = mock_user
+
+    #     mock_get.return_value = mock_user
+
+    #     mock_post = MagicMock()
+    #     mock_post.post_id = 1
+    #     mock_query = MagicMock()
+    #     mock_query.scalars().all.return_value = [mock_post]
+    #     mock_execute.return_value = mock_query
+
+    #     token = encode_token(mock_user.user_id)
+    #     response = self.client.get('/posts', headers={'Authorization': f'Bearer {token}'})
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertIsInstance(response.json, list)
+    #     self.assertGreater(len(response.json), 0)
+    #     self.assertIn('post_id', response.json[0])
 
     @patch('app.auth.token_auth.verify_token')
     @patch('app.auth.token_auth.current_user')
@@ -331,8 +370,8 @@ class TestCommentEndpoints(unittest.TestCase):
     def test_delete_comment(self, mock_commit, mock_get, mock_current_user, mock_verify_token):
         mock_user = MagicMock()
         mock_user.user_id = 1
-        mock_user.role = MagicMock()  # Adding this line
-        mock_user.role.role_name = 'admin'  # Adding this line
+        mock_user.role = MagicMock()
+        mock_user.role.role_name = 'admin'
         mock_current_user.return_value = mock_user
         mock_verify_token.return_value = mock_user
 
@@ -341,7 +380,7 @@ class TestCommentEndpoints(unittest.TestCase):
         mock_comment.user_id = mock_user.user_id
         mock_get.return_value = mock_comment
 
-        mock_get.return_value = mock_user # sets the admin role for the user
+        mock_get.return_value = mock_user # Sets the admin role for the user
 
         token = encode_token(mock_user.user_id)
         response = self.client.delete('/comments/1', headers={'Authorization': f'Bearer {token}'})
