@@ -246,7 +246,7 @@ class TestPostEndpoints(unittest.TestCase):
         mock_verify_token.return_value = mock_user
         mock_get.return_value = mock_user
 
-        mock_post = Post(post_id=1, title="Test Title", content="Test Content")
+        mock_post = Post(post_id=1, title="Test Title", body="Test Content")
         mock_query = MagicMock()
         mock_query.scalars().all.return_value = [mock_post]
         logger.debug(f"Mock execute return value: {mock_query.scalars().all()}")
@@ -263,7 +263,7 @@ class TestPostEndpoints(unittest.TestCase):
         self.assertGreater(len(response.json), 0)
         self.assertIn('post_id', response.json[0])
         self.assertIn('title', response.json[0])
-        self.assertIn('content', response.json[0])
+        self.assertIn('body', response.json[0])
 
 
     # @patch('app.auth.token_auth.verify_token')
