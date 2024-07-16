@@ -49,28 +49,22 @@ def get_token():
 # ==== Users Endpoints ====
 
 # Get all users (Admin Only)
-@app.route('/users', methods=['GET'])
-@token_auth.login_required(role='admin')
-@limiter.limit("100 per day")
-@cache.cached(timeout=60)
-def get_all_users():
-    logger.info("Fetching all users")
-    try:
-        # app.logger.info("Entering get_all_users")
-        # sys.stdout.flush()
-        # Get any request query params aka request.args
-        args = request.args
-        page = args.get('page', 1, type=int)
-        per_page = args.get('per_page', 10, type=int)
-        query = db.select(User).limit(per_page).offset((page-1)*per_page) # select the User model, limit per page and offset
-        users = db.session.execute(query).scalars().all()
-        logger.debug(f"Users fetched: {users}")
-        # app.logger.info(f"Fetched comments: {users}")
-        # sys.stdout.flush()
-        return users_schema.jsonify(users)
-    except Exception as e:
-        logger.error(f"Error fetching users: {e}")
-        return {"error": "Failed to fetch users"}, 500
+# @app.route('/users', methods=['GET'])
+# @token_auth.login_required(role='admin')
+# @limiter.limit("100 per day")
+# @cache.cached(timeout=60)
+# def get_all_users():
+#     # app.logger.info("Entering get_all_users")
+#     # sys.stdout.flush()
+#     # Get any request query params aka request.args
+#     args = request.args
+#     page = args.get('page', 1, type=int)
+#     per_page = args.get('per_page', 10, type=int)
+#     query = db.select(User).limit(per_page).offset((page-1)*per_page) # select the User model, limit per page and offset
+#     users = db.session.execute(query).scalars().all()
+#     # app.logger.info(f"Fetched comments: {users}")
+#     # sys.stdout.flush()
+#     return users_schema.jsonify(users)
 
 # Get a single user by ID (Admin Only)
 @app.route('/users/<int:user_id>', methods=["GET"])
@@ -187,23 +181,23 @@ def delete_user(user_id):
 # ==== Posts Endpoints ====
 
 # Get all posts
-@app.route('/posts', methods=["GET"])
-@token_auth.login_required
-@limiter.limit("100 per day")
-@cache.cached(timeout=60)
-def get_all_posts():
-    # app.logger.info("Entering get_all_posts")
-    # sys.stdout.flush()
-    args = request.args
-    page = args.get('page', 1, type=int)
-    per_page = args.get('per_page', 10, type=int)
-    search = args.get('search', '')
-    # query = db.select(Post)
-    query = db.select(Post).where(Post.title.like(f'%{search}%')).limit(per_page).offset((page-1)*per_page)
-    posts = db.session.scalars(query).all()
-    # app.logger.info(f"Fetched posts: {posts}")
-    # sys.stdout.flush()
-    return posts_schema.jsonify(posts)   
+# @app.route('/posts', methods=["GET"])
+# @token_auth.login_required
+# @limiter.limit("100 per day")
+# @cache.cached(timeout=60)
+# def get_all_posts():
+#     # app.logger.info("Entering get_all_posts")
+#     # sys.stdout.flush()
+#     args = request.args
+#     page = args.get('page', 1, type=int)
+#     per_page = args.get('per_page', 10, type=int)
+#     search = args.get('search', '')
+#     # query = db.select(Post)
+#     query = db.select(Post).where(Post.title.like(f'%{search}%')).limit(per_page).offset((page-1)*per_page)
+#     posts = db.session.scalars(query).all()
+#     # app.logger.info(f"Fetched posts: {posts}")
+#     # sys.stdout.flush()
+#     return posts_schema.jsonify(posts)   
 
 # Get a single post by ID
 @app.route('/posts/<int:post_id>', methods=["GET"])
@@ -219,40 +213,40 @@ def get_single_post(post_id):
     return {"error": f"Post with ID {post_id} does not exist"}, 404 # Not Found
 
 # Create a new post
-@app.route('/posts', methods=["POST"])
-@token_auth.login_required
-@limiter.limit("100 per day")
-def create_post():
-    # Check if the request has a JSON body
-    if not request.is_json:
-        return {"error": "Request body must be application/json"}, 400 # Bad Request by Client
-    try:
-        # Get the request JSON body
-        data = request.json
-        # Check if the body has all of the required fields
-        post_data = post_schema.load(data)
+# @app.route('/posts', methods=["POST"])
+# @token_auth.login_required
+# @limiter.limit("100 per day")
+# def create_post():
+#     # Check if the request has a JSON body
+#     if not request.is_json:
+#         return {"error": "Request body must be application/json"}, 400 # Bad Request by Client
+#     try:
+#         # Get the request JSON body
+#         data = request.json
+#         # Check if the body has all of the required fields
+#         post_data = post_schema.load(data)
 
-        # Get the current user from the token
-        current_user = token_auth.current_user()
+#         # Get the current user from the token
+#         current_user = token_auth.current_user()
 
-        # Create a new instance of Post 
-        new_post = Post(
-            title=post_data['title'],
-            body=post_data['body'],
-            # user_id=post_data['user_id']
-            # Use the user_id from the authenticated token instead of the request body:
-            user_id=current_user.user_id  # Use the user_id from the authenticated user
-        )
-        # and add to the database
-        db.session.add(new_post)
-        db.session.commit()
+#         # Create a new instance of Post 
+#         new_post = Post(
+#             title=post_data['title'],
+#             body=post_data['body'],
+#             # user_id=post_data['user_id']
+#             # Use the user_id from the authenticated token instead of the request body:
+#             user_id=current_user.user_id  # Use the user_id from the authenticated user
+#         )
+#         # and add to the database
+#         db.session.add(new_post)
+#         db.session.commit()
         
-        # Serialize the new post object and return with 201 status
-        return post_schema.jsonify(new_post), 201 # Created - Success
-    except ValidationError as err:
-        return err.messages, 400
-    except ValueError as err:
-        return {"error": str(err)}, 400
+#         # Serialize the new post object and return with 201 status
+#         return post_schema.jsonify(new_post), 201 # Created - Success
+#     except ValidationError as err:
+#         return err.messages, 400
+#     except ValueError as err:
+#         return {"error": str(err)}, 400
     
 # Update a post by ID
 @app.route('/posts/<int:post_id>', methods=["PUT"])
@@ -315,34 +309,34 @@ def delete_post(post_id):
 # ==== Comments Endpoints ====
 
 # Get all comments
-@app.route('/comments', methods=['GET'])
-@token_auth.login_required
-@limiter.limit("100 per day")
-@cache.cached(timeout=60)
-def get_all_comments():
-    # app.logger.info("Entering get_all_comments")
-    # sys.stdout.flush()
-    args = request.args
-    page = args.get('page', 1, type=int)
-    per_page = args.get('per_page', 10, type=int)
-    # query = db.select(Post)
-    query = db.select(Comment).limit(per_page).offset((page-1)*per_page)
-    # query = db.select(Comment) # select the Comment model
-    comments = db.session.execute(query).scalars().all()
-    # app.logger.info(f"Fetched comments: {comments}")
-    # sys.stdout.flush()
-    return comments_schema.jsonify(comments)
+# @app.route('/comments', methods=['GET'])
+# @token_auth.login_required
+# @limiter.limit("100 per day")
+# @cache.cached(timeout=60)
+# def get_all_comments():
+#     # app.logger.info("Entering get_all_comments")
+#     # sys.stdout.flush()
+#     args = request.args
+#     page = args.get('page', 1, type=int)
+#     per_page = args.get('per_page', 10, type=int)
+#     # query = db.select(Post)
+#     query = db.select(Comment).limit(per_page).offset((page-1)*per_page)
+#     # query = db.select(Comment) # select the Comment model
+#     comments = db.session.execute(query).scalars().all()
+#     # app.logger.info(f"Fetched comments: {comments}")
+#     # sys.stdout.flush()
+#     return comments_schema.jsonify(comments)
 
-# Get a single comment by ID
-@app.route('/comments/<int:comment_id>', methods=["GET"])
-@token_auth.login_required
-@limiter.limit("100 per day")
-@cache.cached(timeout=60)
-def get_single_comment(comment_id):
-    comment = db.session.get(Comment, comment_id)
-    if comment is not None:
-        return comment_schema.jsonify(comment)
-    return {"error": f"Comment with ID {comment_id} does not exist"}, 404
+# # Get a single comment by ID
+# @app.route('/comments/<int:comment_id>', methods=["GET"])
+# @token_auth.login_required
+# @limiter.limit("100 per day")
+# @cache.cached(timeout=60)
+# def get_single_comment(comment_id):
+#     comment = db.session.get(Comment, comment_id)
+#     if comment is not None:
+#         return comment_schema.jsonify(comment)
+#     return {"error": f"Comment with ID {comment_id} does not exist"}, 404
 
 # Create a new comment
 @app.route('/comments', methods=["POST"])
@@ -420,11 +414,11 @@ def delete_comment(comment_id):
     return {"message": f"Comment with ID {comment_id} has been deleted"}, 200
 
 # List all comments for a specific post
-@app.route('/posts/<int:post_id>/comments', methods=["GET"])
-@token_auth.login_required
-@limiter.limit("100 per day")
-@cache.cached(timeout=60)
-def list_comments(post_id):
-    query = db.select(Comment).where(Comment.post_id == post_id)
-    comments = db.session.scalars(query).all()
-    return comments_schema.jsonify(comments)
+# @app.route('/posts/<int:post_id>/comments', methods=["GET"])
+# @token_auth.login_required
+# @limiter.limit("100 per day")
+# @cache.cached(timeout=60)
+# def list_comments(post_id):
+#     query = db.select(Comment).where(Comment.post_id == post_id)
+#     comments = db.session.scalars(query).all()
+#     return comments_schema.jsonify(comments)
