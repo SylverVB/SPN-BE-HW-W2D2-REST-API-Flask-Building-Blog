@@ -24,3 +24,7 @@ test_integration.py
 
 # Script to test SQLite Fallback Locally
 test_fallback.py
+
+/instance
+
+.advanced_bblog_api.db
