@@ -230,11 +230,11 @@ class TestPostEndpoints(unittest.TestCase):
         response = self.client.delete('/posts/1', headers={'Authorization': f'Bearer {token}'})
         self.assertEqual(response.status_code, 200)
 
-
     @patch('app.auth.token_auth.verify_token')
     @patch('app.auth.token_auth.current_user')
     @patch('app.routes.db.session.scalars')
-    def test_get_all_posts(self, mock_scalars, mock_current_user, mock_verify_token):
+    @patch('app.routes.db.session.get')
+    def test_get_all_posts(self, mock_get, mock_scalars, mock_current_user, mock_verify_token):
         logger.debug("Starting test_get_all_posts")
 
         # Set up mock user with admin role
@@ -244,8 +244,10 @@ class TestPostEndpoints(unittest.TestCase):
         mock_user.role.role_name = 'admin'
         mock_current_user.return_value = mock_user
         mock_verify_token.return_value = mock_user
+        mock_get.return_value = mock_user
 
         # Set up mock post data with Faker
+        fake = Faker()
         mock_posts = [Post(post_id=fake.random_int(min=1, max=1000),
                         title=fake.sentence(nb_words=6),
                         body=fake.paragraph(nb_sentences=3),
@@ -313,7 +315,6 @@ class TestPostEndpoints(unittest.TestCase):
         response = self.client.put('/posts/1', json=request_body, headers={'Authorization': f'Bearer {token}'})
         self.assertEqual(response.status_code, 200)
         mock_commit.assert_called_once()
-
 
 
 class TestCommentEndpoints(unittest.TestCase):
@@ -474,7 +475,7 @@ class TestCommentEndpoints(unittest.TestCase):
             self.assertIn('comment_id', comment)
             self.assertIn('post_id', comment)
             self.assertIn('content', comment)
-            
+
 
 # if __name__ == '__main__':
 #     unittest.main()
