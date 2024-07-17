@@ -10,6 +10,7 @@ import click
 
 # Create an instance of the flask application
 app = Flask(__name__)
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///advanced_blog_api.db'
 
 # database_url = os.environ.get('DATABASE_URL') or 'sqlite:///advanced_blog_api.db'
