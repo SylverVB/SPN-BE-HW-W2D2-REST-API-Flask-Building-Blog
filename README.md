@@ -1,4 +1,4 @@
-# Advanced Blog API
+# Advanced Blog API CI/CD
 
 ## Overview
 
@@ -10,7 +10,7 @@ The application is deployed and available at [https://advanced-blog-api.onrender
 
 ## Table of Contents
 
-- [Advanced Blog API](#advanced-blog-api)
+- [Advanced Blog API CI/CD](#advanced-blog-api-cicd)
   - [Overview](#overview)
   - [Table of Contents](#table-of-contents)
   - [Installation](#installation)
