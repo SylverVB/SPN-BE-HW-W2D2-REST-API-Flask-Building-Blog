@@ -14,12 +14,6 @@ class UserSchema(ma.Schema):
     password = fields.String(required=True)
     role = fields.String(required=False)
 
-    # @post_load
-    # def make_user(self, data, **kwargs):
-    #     if 'role' in data and isinstance(data['role'], str):
-    #         data['role'] = Role(role_name=data['role'])
-    #     return data
-
     @post_load
     def make_user(self, data, **kwargs):
         if 'role' in data and isinstance(data['role'], str):

@@ -4,6 +4,10 @@
 
 The Advanced Blog API is a fully-featured blogging platform built with Flask. It supports CRUD operations for users, posts, and comments. The API uses JWT-based authentication for secure access to endpoints, and it includes comprehensive documentation with Swagger. Unit tests ensure the reliability and stability of the API.
 
+The application is deployed and available at [https://advanced-blog-api.onrender.com/](https://advanced-blog-api.onrender.com/). If the Render service is unavailable, the application falls back to a SQLite server.
+
+![API Documentation Screenshot](./assets/vb_advanced_blog_api_screenshot.jpeg)
+
 ## Table of Contents
 
 - [Advanced Blog API](#advanced-blog-api)
@@ -84,7 +88,13 @@ Replace `your_database_url` with the URL of your database and `your_secret_key` 
    flask db upgrade
    ```
 
-2. **Run the Flask application:**
+2. **Setup roles:**
+
+   ```bash
+   flask setup_roles
+   ```
+
+3. **Run the Flask application:**
 
    ```bash
    flask --debug run
@@ -110,7 +120,9 @@ This will execute all tests located in the `tests` directory and provide a summa
 
 ## API Documentation
 
-The API documentation is available via Swagger. After starting the application, navigate to `http://127.0.0.1:5000/api/docs/` to view the interactive API documentation.
+The API documentation is available via Swagger. After starting the application, navigate to [http://127.0.0.1:5000/api/docs/](http://127.0.0.1:5000/api/docs/) to view the interactive API documentation.
+
+The API documentation is also available at the deployed server: [https://advanced-blog-api.onrender.com/api/docs/](https://advanced-blog-api.onrender.com/api/docs/).
 
 ## API Endpoints
 
@@ -146,7 +158,11 @@ The API documentation is available via Swagger. After starting the application, 
 ## Project Structure
 
 ```bash
-flask-blog-api/
+SPN-BE-HW-W2D2-REST-API-Flask-Building-Blog/
+├── .github/
+│   ├── workflows/
+│     ├── main.yaml
+├── .vscode/
 ├── app/
 │   ├── __init__.py
 │   ├── auth.py
@@ -159,6 +175,8 @@ flask-blog-api/
 │   │   ├── first_commit_rest_api_design_patterns.py
 │   │   ├── second_third_commits_api_security.py
 │   │   ├── fourth_commit_advanced_blog_api_mini_project.py
+│   ├── assets/
+│   │   ├── vb_advanced_blog_api_screenshot.png
 │   ├── models/
 │   │   ├── __init__.py
 │   │   ├── post.py
@@ -182,6 +200,7 @@ flask-blog-api/
 ├── .env
 ├── .gitignore
 ├── README.md
+├── setup_roles.py
 ├── requirements.txt
 ```
 
