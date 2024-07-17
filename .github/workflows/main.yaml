@@ -3,7 +3,7 @@ name: Flask Advanced Blog API CI/CD
 on:
   push:
     branches: [main, master]
-
+ 
 jobs:
   build:
     runs-on: ubuntu-latest
