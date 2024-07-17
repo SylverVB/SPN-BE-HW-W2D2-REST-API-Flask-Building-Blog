@@ -3,6 +3,7 @@ info:
   title: "Victor Bondaruk's Blog API"
   version: 1.0.0
 servers:
+  - url: 'https://advanced-blog-api.onrender.com/'
   - url: 'http://localhost:5000'
 components:
   securitySchemes:
